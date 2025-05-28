@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero bg-light p-5 rounded-3 mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold">Ahpra Compliance Audit Platform</h1>
+            <p class="lead">Ensure your medical website complies with all Ahpra guidelines with our comprehensive audit and improvement platform.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                <a href="{{ url_for('main.features') }}" class="btn btn-outline-secondary btn-lg px-4">Learn More</a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <img src="{{ url_for('static', filename='img/hero-image.svg') }}" class="img-fluid" alt="Ahpra Compliance Audit">
+        </div>
+    </div>
+</section>
+
+<section class="features mb-5">
+    <h2 class="text-center mb-4">Key Features</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">AI-Powered Analysis</h3>
+                    <p class="card-text">Our advanced AI engine analyzes your website content against Ahpra guidelines, identifying non-compliant text and structures.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-code fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Semantic HTML Fixes</h3>
+                    <p class="card-text">Get tailored recommendations for improving your website's HTML structure, enhancing both compliance and SEO.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-check fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Comprehensive Reports</h3>
+                    <p class="card-text">Receive detailed reports highlighting compliance issues, with specific guideline references and suggested improvements.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works bg-light p-5 rounded-3 mb-5">
+    <h2 class="text-center mb-4">How It Works</h2>
+    <div class="row">
+        <div class="col-md-3 text-center">
+            <div class="step-circle bg-primary text-white mx-auto mb-3">1</div>
+            <h4>Register</h4>
+            <p>Create an account and submit your website URL</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="step-circle bg-primary text-white mx-auto mb-3">2</div>
+            <h4>Website Crawl</h4>
+            <p>Our system crawls all pages of your website</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="step-circle bg-primary text-white mx-auto mb-3">3</div>
+            <h4>AI Analysis</h4>
+            <p>Each page is analyzed for Ahpra compliance</p>
+        </div>
+        <div class="col-md-3 text-center">
+            <div class="step-circle bg-primary text-white mx-auto mb-3">4</div>
+            <h4>Detailed Report</h4>
+            <p>Receive a comprehensive compliance report</p>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials mb-5">
+    <h2 class="text-center mb-4">What Medical Professionals Say</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="card-text">"This platform helped us identify and fix several Ahpra compliance issues we weren't even aware of. Highly recommended for any medical practice with an online presence."</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div>
+                            <h5 class="mb-0">Melbourne Medical Centre</h5>
+                            <small class="text-muted">Practice Manager</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="card-text">"The semantic HTML improvements suggested by the platform not only made our site compliant but also improved our search engine rankings significantly."</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div>
+                            <h5 class="mb-0">Sydney Dental Clinic</h5>
+                            <small class="text-muted">Marketing Director</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="card-text">"The monthly automated checks give us peace of mind that our website remains compliant even as we update content regularly."</p>
+                    <div class="d-flex align-items-center mt-3">
+                        <div>
+                            <h5 class="mb-0">Brisbane Medical Group</h5>
+                            <small class="text-muted">Website Administrator</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta bg-primary text-white p-5 rounded-3">
+    <div class="text-center">
+        <h2 class="mb-3">Ready to ensure your website is Ahpra compliant?</h2>
+        <p class="lead mb-4">Start with a free audit of your first 3 pages today.</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">Get Started Now</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .step-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .hero {
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title or 'Page Detail' }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.website_detail', website_id=page.website.id) }}">{{ page.website.name }}</a></li>
+                <li class="breadcrumb-item active">{{ page.title or 'Untitled Page' }}</li>
+            </ol>
+        </nav>
+        <h1 class="h3">{{ page.title or 'Untitled Page' }}</h1>
+        <p class="text-muted">
+            <a href="{{ page.url }}" target="_blank">{{ page.url }}</a>
+        </p>
+    </div>
+    <div>
+        <a href="{{ page.url }}" target="_blank" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-external-link-alt me-1"></i>View Original
+        </a>
+        {% if page.analyzed %}
+        <a href="#" class="btn btn-primary" onclick="window.print(); return false;">
+            <i class="fas fa-print me-1"></i>Print Report
+        </a>
+        {% elif not page.analysis_paid %}
+        <form action="{{ url_for('dashboard.analyze_page', page_id=page.id) }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check-circle me-1"></i>Analyze This Page
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Analysis Status -->
+{% if not page.analyzed and page.analysis_paid %}
+<div class="alert alert-info" id="analysis-status-alert" data-page-id="{{ page.id }}">
+    <div class="d-flex align-items-center">
+        <div class="me-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div>
+            <h5 class="alert-heading mb-1">Analysis in Progress</h5>
+            <p class="mb-0">We're currently analyzing this page for Ahpra compliance. This may take a minute or two.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Overview Card -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Page Overview</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center mb-3">
+                    <h6 class="mb-0 me-3">Compliance Score:</h6>
+                    {% if page.analyzed %}
+                    <div class="progress flex-grow-1" style="height: 20px;">
+                        <div class="progress-bar {% if page.compliance_score < 70 %}bg-danger{% elif page.compliance_score < 90 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ page.compliance_score }}%" 
+                             aria-valuenow="{{ page.compliance_score }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ page.compliance_score }}%
+                        </div>
+                    </div>
+                    {% else %}
+                    <span class="badge bg-secondary">Not analyzed</span>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex align-items-center mb-3">
+                    <h6 class="mb-0 me-3">Status:</h6>
+                    {% if page.analyzed %}
+                        {% if page.is_compliant %}
+                        <span class="badge bg-success">Compliant</span>
+                        {% else %}
+                        <span class="badge bg-danger">Non-Compliant</span>
+                        {% endif %}
+                    {% else %}
+                        {% if page.analysis_paid %}
+                        <span class="badge bg-info">Analysis in progress</span>
+                        {% else %}
+                        <span class="badge bg-warning">Pending analysis</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                
+                {% if page.analyzed %}
+                <div class="d-flex align-items-center mb-3">
+                    <h6 class="mb-0 me-3">Compliance Issues:</h6>
+                    <span class="fs-5">{{ violations|length }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+                {% if page.analyzed %}
+                <div class="d-flex flex-column h-100 justify-content-center align-items-center">
+                    {% if page.is_compliant %}
+                    <div class="text-center text-success mb-3">
+                        <i class="fas fa-check-circle fa-5x"></i>
+                    </div>
+                    <h4 class="text-success">This page is Ahpra compliant!</h4>
+                    {% else %}
+                    <div class="text-center text-danger mb-3">
+                        <i class="fas fa-exclamation-triangle fa-5x"></i>
+                    </div>
+                    <h4 class="text-danger">This page needs attention</h4>
+                    <p class="text-center">Review the issues below to ensure Ahpra compliance</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Violations List -->
+{% if page.analyzed and violations %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Compliance Issues</h5>
+    </div>
+    <div class="card-body">
+        <div class="accordion" id="violationsAccordion">
+            {% for violation in violations %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                    <button class="accordion-button {{ 'collapsed' if loop.index > 1 else '' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.index == 1 else 'false' }}" aria-controls="collapse{{ loop.index }}">
+                        <div>
+                            <span class="badge bg-danger me-2">{{ violation.guideline_reference }}</span>
+                            <span class="text-truncate d-inline-block" style="max-width: 600px;">{{ violation.text_content|truncate(80) }}</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {{ 'show' if loop.index == 1 else '' }}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#violationsAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-danger">Non-Compliant Text:</h6>
+                                <div class="border p-3 bg-light mb-3">
+                                    {{ violation.text_content }}
+                                </div>
+                                
+                                <h6>Violated Guideline:</h6>
+                                <p><strong>{{ violation.guideline_reference }}</strong></p>
+                                
+                                <h6>Justification:</h6>
+                                <p>{{ violation.justification }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success">Suggested Compliant Version:</h6>
+                                <div class="border p-3 bg-light mb-3">
+                                    {{ violation.suggested_revision }}
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>This suggested revision complies with Ahpra guidelines while preserving the core information.
+                                </div>
+                                
+                                <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard('{{ violation.suggested_revision|replace("'", "\\'") }}')">
+                                    <i class="fas fa-copy me-1"></i>Copy Suggested Text
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% elif page.analyzed and not violations %}
+<div class="card mb-4">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+        <h4>No compliance issues found!</h4>
+        <p class="text-muted">This page appears to be fully compliant with Ahpra guidelines.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- HTML Structure Analysis -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Semantic HTML Structure</h5>
+        {% if page.analyzed and not page.html_fix_paid %}
+        <form action="{{ url_for('dashboard.fix_html', page_id=page.id) }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="fas fa-code me-1"></i>Generate HTML Fix (u00a310)
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if html_fix %}
+        <ul class="nav nav-tabs" id="htmlTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="explanation-tab" data-bs-toggle="tab" data-bs-target="#explanation" type="button" role="tab" aria-controls="explanation" aria-selected="true">Explanation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="before-tab" data-bs-toggle="tab" data-bs-target="#before" type="button" role="tab" aria-controls="before" aria-selected="false">Original HTML</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="after-tab" data-bs-toggle="tab" data-bs-target="#after" type="button" role="tab" aria-controls="after" aria-selected="false">Improved HTML</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="htmlTabsContent">
+            <div class="tab-pane fade show active p-3" id="explanation" role="tabpanel" aria-labelledby="explanation-tab">
+                <h5>HTML Structure Improvements</h5>
+                <p>{{ html_fix.justification }}</p>
+                <button class="btn btn-primary" onclick="copyToClipboard('{{ html_fix.fixed_html|replace("'", "\\'") }}')">
+                    <i class="fas fa-copy me-1"></i>Copy Improved HTML
+                </button>
+                <button class="btn btn-outline-secondary ms-2" id="regenerateHtmlBtn" data-page-id="{{ page.id }}">
+                    <i class="fas fa-sync me-1"></i>Regenerate
+                </button>
+            </div>
+            <div class="tab-pane fade p-3" id="before" role="tabpanel" aria-labelledby="before-tab">
+                <pre class="bg-light p-3"><code class="html">{{ html_fix.original_html }}</code></pre>
+            </div>
+            <div class="tab-pane fade p-3" id="after" role="tabpanel" aria-labelledby="after-tab">
+                <pre class="bg-light p-3"><code class="html">{{ html_fix.fixed_html }}</code></pre>
+            </div>
+        </div>
+        {% elif page.html_fix_paid and not html_fix %}
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5>Generating HTML improvements...</h5>
+            <p class="text-muted">This may take a minute or two. The page will automatically refresh when ready.</p>
+        </div>
+        {% elif page.analyzed %}
+        <div class="text-center py-4">
+            <i class="fas fa-code fa-4x text-muted mb-3"></i>
+            <h5>HTML Structure Analysis</h5>
+            <p class="text-muted mb-4">Purchase a semantic HTML analysis to improve your page structure and SEO.</p>
+            <form action="{{ url_for('dashboard.fix_html', page_id=page.id) }}" method="POST">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-code me-1"></i>Generate HTML Fix (u00a310)
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted">HTML structure analysis will be available after content analysis is complete.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Copy text to clipboard function
+    function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        // Show temporary alert
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = '<i class="fas fa-check-circle me-2"></i>Copied to clipboard!';
+        document.body.appendChild(alert);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            alert.remove();
+        }, 2000);
+    }
+    
+    // Check analysis status
+    function checkAnalysisStatus() {
+        const statusAlert = document.getElementById('analysis-status-alert');
+        if (statusAlert) {
+            const pageId = statusAlert.dataset.pageId;
+            
+            fetch(`/api/page/${pageId}/status`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.analyzed) {
+                    // Reload the page to show the results
+                    window.location.reload();
+                } else {
+                    // Check again in 5 seconds
+                    setTimeout(checkAnalysisStatus, 5000);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking status:', error);
+                // Try again in 10 seconds if there was an error
+                setTimeout(checkAnalysisStatus, 10000);
+            });
+        }
+    }
+    
+    // Regenerate HTML fix
+    document.addEventListener('DOMContentLoaded', function() {
+        const regenerateBtn = document.getElementById('regenerateHtmlBtn');
+        if (regenerateBtn) {
+            regenerateBtn.addEventListener('click', function() {
+                const pageId = this.dataset.pageId;
+                
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Regenerating...';
+                
+                fetch(`/api/html-fix/${pageId}/regenerate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while regenerating HTML fix.');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-sync me-1"></i>Regenerate';
+                });
+            });
+        }
+        
+        // Start checking status if analysis is in progress
+        const statusAlert = document.getElementById('analysis-status-alert');
+        if (statusAlert) {
+            checkAnalysisStatus();
+        }
+        
+        // Auto-refresh if HTML fix is being generated
+        if (document.querySelector('.spinner-border') && !statusAlert) {
+            setTimeout(() => window.location.reload(), 10000);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+[nix]
+channel = "stable-22_11"
+
+[env]
+PYTHONUNBUFFERED = "1"
+
+[unitTest]
+language = "python3"
+
+[deployment]
+run = "python3 app.py"
+deploymentTarget = "cloudrun"
+
+[server]
+start = "python app.py"

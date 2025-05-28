@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Add Website{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Add a New Website for Compliance Audit</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('dashboard.add_website') }}">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control" + (' is-invalid' if form.name.errors else '')) }}
+                        {% for error in form.name.errors %}
+                            <div class="invalid-feedback">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                        <div class="form-text">A descriptive name to help you identify this website</div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.url.label(class="form-label") }}
+                        {{ form.url(class="form-control" + (' is-invalid' if form.url.errors else ''), placeholder="https://example.com") }}
+                        {% for error in form.url.errors %}
+                            <div class="invalid-feedback">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                        <div class="form-text">Enter the full URL including https://</div>
+                    </div>
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>What happens next?</h5>
+                        <p>After adding your website:</p>
+                        <ol>
+                            <li>Our system will crawl all pages of your website</li>
+                            <li>Your first 3 pages will be analyzed for free</li>
+                            <li>Additional pages will cost u00a310 each, deducted from your credit balance</li>
+                        </ol>
+                        <p class="mb-0">You'll be able to view detailed reports and fix suggestions for each page.</p>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

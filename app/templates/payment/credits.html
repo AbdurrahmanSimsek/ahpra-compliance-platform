@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Credits{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="h3">Manage Credits</h1>
+        <p class="lead">Purchase credits to analyze pages and generate HTML fixes for your websites.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="card bg-primary text-white">
+            <div class="card-body p-3">
+                <h5 class="card-title">Current Balance</h5>
+                <h2 class="display-6 mb-0">u00a3{{ current_user.credit_balance }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Credit Packages -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Purchase Credits</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            {% for package in packages %}
+            <div class="col-md-4">
+                <div class="card h-100 {% if package.name == 'Standard' %}border-primary{% endif %}">
+                    <div class="card-header {% if package.name == 'Standard' %}bg-primary text-white{% endif %}">
+                        <h5 class="mb-0">{{ package.name }}</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            <span class="display-5">u00a3{{ package.price }}</span>
+                        </div>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>{{ package.credits }} credits</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Analyze {{ package.credits // 10 }} pages</li>
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Generate {{ package.credits // 10 }} HTML fixes</li>
+                            {% if package.name == 'Standard' %}
+                            <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i><strong>Most popular option</strong></li>
+                            {% endif %}
+                        </ul>
+                        <div class="mt-auto">
+                            <button class="btn btn-primary w-100 buy-credits-btn" data-package-id="{{ package.id }}">
+                                Purchase
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Transaction History</h5>
+    </div>
+    <div class="card-body">
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Credits</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                        <td>{{ transaction.description }}</td>
+                        <td>u00a3{{ transaction.amount }}</td>
+                        <td class="{% if transaction.credits > 0 %}text-success{% elif transaction.credits < 0 %}text-danger{% endif %}">
+                            {{ transaction.credits }}
+                        </td>
+                        <td>
+                            <span class="badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ transaction.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted py-3">No transactions yet</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up Stripe
+        const stripe = Stripe('{{ config["STRIPE_PUBLIC_KEY"] }}');
+        
+        // Handle buy credits button clicks
+        const buyButtons = document.querySelectorAll('.buy-credits-btn');
+        buyButtons.forEach(button => {
+            button.addEventListener('click', async function() {
+                const packageId = this.dataset.packageId;
+                
+                // Disable button and show loading state
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                
+                try {
+                    // Create checkout session
+                    const response = await fetch(`/payment/purchase/${packageId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    
+                    const session = await response.json();
+                    
+                    if (session.error) {
+                        alert('Error: ' + session.error);
+                        this.disabled = false;
+                        this.innerHTML = 'Purchase';
+                        return;
+                    }
+                    
+                    // Redirect to Stripe checkout
+                    const result = await stripe.redirectToCheckout({
+                        sessionId: session.id
+                    });
+                    
+                    if (result.error) {
+                        alert(result.error.message);
+                        this.disabled = false;
+                        this.innerHTML = 'Purchase';
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while processing your payment.');
+                    this.disabled = false;
+                    this.innerHTML = 'Purchase';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
